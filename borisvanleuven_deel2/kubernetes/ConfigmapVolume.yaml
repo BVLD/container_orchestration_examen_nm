@@ -1,0 +1,12 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: api-config
+  namespace: exam-borisvanleuven
+data:
+  api.json: |
+    {
+      "api-host": "api",
+      "api-port": 80,
+      "name": "Boris Van Leuven"
+    }

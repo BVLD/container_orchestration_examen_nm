@@ -1,0 +1,75 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: api
+  namespace: exam-borisvanleuven
+  labels:
+    createdBy: "Nathan-Segers"
+
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: api
+  template:
+    metadata:
+      labels:
+        app: api
+    spec:
+      nodeSelector: # Node selector to deploy on agent-2
+        kubernetes.io/hostname: agent-2
+      containers:
+        - image: nathansegers/containers_23-24_december_api
+          imagePullPolicy: Always
+          name: api-demo
+          ports:
+            - containerPort: 8000 # Adjusted containerPort to 8000
+          resources: {}
+          livenessProbe:
+            httpGet:
+              path: /
+              port: 8000 # Adjusted port to match containerPort
+            initialDelaySeconds: 15
+            periodSeconds: 10
+          env:
+            - name: NAME # Environment variable name from ConfigMap
+              valueFrom:
+                configMapKeyRef:
+                  name: configmap # Reference to the ConfigMap
+                  key: NAME # Key in the ConfigMap for the variable NAME
+            - name: DATA # Environment variable name from ConfigMap
+              valueFrom:
+                configMapKeyRef:
+                  name: configmap # Reference to the ConfigMap
+                  key: DATA # Key in the ConfigMap for the variable DATA
+            - name: API_PORTS # Environment variable for API_PORTS
+              value: "8000" # Assuming you want to set API_PORTS to 8000
+            - name: API_HOST # Environment variable for API_HOST
+              value: 172.30.248.175
+      volumes:
+        - name: api-config-volume
+          configMap:
+            name: api-config
+            items:
+              - key: api.json
+                path: api.json
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: api-service
+  namespace: exam-borisvanleuven
+spec:
+  type: NodePort
+  selector:
+    app: api
+  ports:
+    - name: port-80 # Name for the first port (port 80)
+      port: 80
+      targetPort: 8000
+      nodePort: 30000 # NodePort changed to 30000 for port 80
+    - name: port-8000 # Name for the second port (port 8000)
+      port: 8000
+      targetPort: 8000
+      nodePort: 30001 # NodePort changed to 30001 for port 8000
